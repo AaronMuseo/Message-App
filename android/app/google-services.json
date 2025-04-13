@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "203710661305",
+    "project_id": "message-app-7bae8",
+    "storage_bucket": "message-app-7bae8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:203710661305:android:b1ae7b694c663422a45168",
+        "android_client_info": {
+          "package_name": "com.example.message"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "203710661305-nd427guf0vtopm6evdrugbvuhat7fb0e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAB1AI1TzMaPnpqLWoiNwlseFxP2D4OZUo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "203710661305-nd427guf0vtopm6evdrugbvuhat7fb0e.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "203710661305-h0dfs2nqr9a9jfij8lteh29qn87n6ajc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.message"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
