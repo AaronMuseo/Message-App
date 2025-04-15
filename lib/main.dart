@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:message/chat_screen.dart';
+import 'package:message/user_list.dart';
 import 'firebase_options.dart';
 import 'Authentication.dart';
 
@@ -41,7 +43,7 @@ class MyApp extends StatelessWidget {
           if(snapshot.connectionState == ConnectionState.waiting){
             return const Center(child: CircularProgressIndicator(),);
           }else if (snapshot.hasData){
-            return const MyHomePage(title: 'Yo!');
+            return UserList();
 
           }else{
             return AuthPage();
@@ -65,17 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-
-        leading: IconButton(onPressed: (){}, icon: Icon(Icons.menu)),
-        title: Text("Messages"),
-        actions: [
-          IconButton(onPressed: (){}, icon: Icon(Icons.edit))
-        ],
-      ),
-    );
+    return Scaffold();
   }
 
 }
