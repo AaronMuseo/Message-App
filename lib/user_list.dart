@@ -7,7 +7,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class UserList extends StatelessWidget{
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
   final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
   @override
@@ -19,29 +18,25 @@ class UserList extends StatelessWidget{
             onPressed: (){
               _scaffoldKey.currentState?.openDrawer();
             },
-            icon: Icon(Icons.menu)),
+            icon: Icon(Icons.menu)
+        ),
         title: Text("Users"),
-
-
-          
         actions: <Widget>[
           IconButton(
               onPressed: (){
                 showAddUser(context);
               },
-              icon: Icon(Icons.person_add))
-
-
+              icon: Icon(Icons.person_add)
+          )
         ],
-
-      ),drawer: Drawer(
-      child: ListView(
+      ),
+      drawer: Drawer(
+        child: ListView(
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
             decoration: BoxDecoration(color: Colors.deepPurple),
             child: Text('Menu', style: TextStyle(color: Colors.white)),
-            
           ),
           ListTile(
             title: Text('Profile'),
@@ -49,11 +44,17 @@ class UserList extends StatelessWidget{
               Navigator.pop(context);
               showProfile(context);
             },
+          ),
+          ListTile(
+            title: Text('Friend Requests'),
+            onTap: (){
+              Navigator.pop(context);
+              showFriend(context);
+            },
           )
         ],
       ),
     ),
-
         body: StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('users')
@@ -63,7 +64,7 @@ class UserList extends StatelessWidget{
           builder:(context, snapshot){
             if(!snapshot.hasData) return Center(child: CircularProgressIndicator());
 
-            final users = snapshot.data!.docs.where((doc) => doc.id !=currentUserId).toList();
+            final users = snapshot.data!.docs;
 
             return ListView.builder(
               itemCount: users.length,
@@ -96,7 +97,10 @@ class UserList extends StatelessWidget{
           title: Text('Your UID'),
           content: Text(currentUserId),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: Text('OK'))
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('OK'),
+            )
           ],
         ),
     );
@@ -104,10 +108,11 @@ class UserList extends StatelessWidget{
 
   void showAddUser(BuildContext context) {
     String enteredUid = '';
-    showDialog(context: context,
+    showDialog(
+        context: context,
     builder: (context) => AlertDialog(
       
-      title: Text('Add User by UID'),
+      title: Text('Send Friend Request'),
       content: TextField(
         onChanged: (value) => enteredUid = value,
         decoration: InputDecoration(hintText: 'Enter UID'),
@@ -120,47 +125,102 @@ class UserList extends StatelessWidget{
         TextButton(onPressed: () async{
           Navigator.pop(context);
           if (enteredUid.isNotEmpty && enteredUid != currentUserId){
-            final userDoc = await FirebaseFirestore.instance.collection('users').doc(enteredUid).get();
+            final userDoc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(enteredUid)
+                .get();
             if (userDoc.exists){
-              final user = AppUser.fromMap(userDoc.data() as Map<String, dynamic>);
+              final myName = FirebaseAuth.instance.currentUser!.displayName ?? 'Unknown';
 
               await FirebaseFirestore.instance
                   .collection('users')
+                  .doc(enteredUid)
+                  .collection('friend_requests')
                   .doc(currentUserId)
-                  .collection('contacts')
-                  .doc(user.uid)
                   .set({
-                    'uid': user.uid,
-                    'name': user.name,
-                  })
-                  .then((_){
-                  print("User added to contacts");
+                    'uid': currentUserId,
+                    'name': myName,
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Friend request sent!"))
+                  );
 
-              })
-              .catchError((error){
-                print("Failed to add contact: $error");
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Failed to add contact: $error")),
-                );;
-              });
 
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => Chatscreen(receiver: user)),
-              );
             }else{
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("User not found. :(")));
+              ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("User not found. :("))
+              );
             }
           }
-        }, child: Text('Add'))
-
+          }, child: Text('Add')
+        )
       ]
     )
     );
-
-
   }
 
+  void showFriend(BuildContext context) {
+   showDialog(
+       context: context,
+       builder: (_) => AlertDialog(
+         title: Text('Friend Requests'),
+         content: StreamBuilder<QuerySnapshot>(
+           stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUserId)
+              .collection('friend_requests')
+              .snapshots(),
+           builder: (context, snapshot) {
+             if (!snapshot.hasData) return CircularProgressIndicator();
+
+             final requests = snapshot.data!.docs;
+
+             if (requests.isEmpty) return Text("No requests. ");
+
+             return Column(
+               mainAxisSize: MainAxisSize.min,
+               children: requests.map((doc){
+                 final data = doc.data() as Map<String, dynamic>;
+                 return ListTile(
+                   title: Text(data['name']),
+                   trailing: TextButton(
+                     child: Text("Accept"),
+                       onPressed: () async{
+
+                         await FirebaseFirestore.instance
+                             .collection('users')
+                             .doc(currentUserId)
+                             .collection('contacts')
+                             .doc(data['uid'])
+                             .set({'uid': data['uid'], 'name': data['name']});
+
+                         final myName = FirebaseAuth.instance.currentUser!.displayName ?? 'Unknown';
+
+                         await FirebaseFirestore.instance
+                             .collection('users')
+                             .doc(data['uid'])
+                             .collection('contacts')
+                             .doc(currentUserId)
+                             .set({'uid': currentUserId, 'name': myName});
+
+
+                         await FirebaseFirestore.instance
+                             .collection('users')
+                             .doc(currentUserId)
+                             .collection('friend_requests')
+                             .doc(data['uid'])
+                             .delete();
+                         Navigator.pop(context);
+                       },
+                 ),
+                 );
+           }).toList(),
+           );
+           },
+         ),
+       ),
+   );
+  }
 }
 
 
